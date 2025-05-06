@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="urm.png" type="image/png" sizes="64x64">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - URMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Main Content -->
+    <div class="p-6 min-h-screen">
+        <!-- Logout Button -->
+        <div class="mb-6">
+            <button id="logoutBtn" class="bg-red-500 text-white p-2 rounded hover:bg-red-600">Logout
+                <a href="login.html"></a>
+            </button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="spinner mx-auto"></div>
+
+        <!-- Student Profile -->
+        <section id="studentProfile" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Your Profile</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <div id="studentDetails" class="space-y-2">
+                    <p><strong>Name:</strong> <span id="studentName"></span></p>
+                    <p><strong>Matriculation Number:</strong> <span id="studentMatricNumber"></span></p>
+                    <p><strong>Student ID:</strong> <span id="studentId"></span></p>
+                    <p><strong>Email:</strong> <span id="studentEmail"></span></p>
+                    <p><strong>Department:</strong> <span id="studentDepartment"></span></p>
+                    <p><strong>Level:</strong> <span id="studentLevel"></span></p>
+                    <p><strong>Gender:</strong> <span id="studentGender"></span></p>
+                </div>
+                <div id="studentError" class="hidden p-4 mb-4 bg-red-500 text-white rounded"></div>
+            </div>
+        </section>
+
+        <!-- Courses List -->
+        <section id="coursesList" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Your Department Courses</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Course ID</th>
+                            <th class="border p-2">Course Code</th>
+                            <th class="border p-2">Course Title</th>
+                            <th class="border p-2">Department ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesTable">
+                        <tr id="loadingRow" class="hidden">
+                            <td colspan="4" class="border p-2 text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="coursesError" class="hidden p-4 mt-4 bg-red-500 text-white rounded"></div>
+            </div>
+        </section>
+
+        <!-- Results List -->
+        <section id="resultsList" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Your Results</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Result ID</th>
+                            <th class="border p-2">Course Code</th>
+                            <th class="border p-2">Semester ID</th>
+                            <th class="border p-2">Score</th>
+                            <th class="border p-2">Grade</th>
+                            <th class="border p-2">Grade Point</th>
+                            <th class="border p-2">Session ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTable"></tbody>
+                </table>
+                <div id="resultsError" class="hidden p-4 mt-4 bg-red-500 text-white rounded"></div>
+                <pre id="resultsJsonResponse" class="hidden p-4 mt-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+            </div>
+        </section>
+
+        <!-- Search Results -->
+        <section id="searchResults" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Search Results by Course Code</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <form id="searchResultForm" class="flex gap-2 mb-4">
+                    <input type="text" name="courseCode" placeholder="Course Code (e.g., CS101)" class="p-2 border rounded flex-1" required>
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Search</button>
+                </form>
+                <div id="searchResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <table id="searchResultsTable" class="w-full border-collapse hidden">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Result ID</th>
+                            <th class="border p-2">Course Code</th>
+                            <th class="border p-2">Semester ID</th>
+                            <th class="border p-2">Score</th>
+                            <th class="border p-2">Grade</th>
+                            <th class="border p-2">Grade Point</th>
+                            <th class="border p-2">Session ID</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="searchResultsError" class="hidden p-4 mt-4 bg-red-500 text-white rounded"></div>
+                <pre id="searchResultJsonResponse" class="hidden p-4 mt-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Logout function
+            function handleLogout() {
+                function showNotification(message, type = 'success') {
+                    const notification = document.createElement('div');
+                    notification.textContent = message;
+                    notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white z-50`;
+                    document.body.appendChild(notification);
+                    setTimeout(() => notification.remove(), 3000);
+                }
+
+                localStorage.removeItem('authToken');
+                sessionStorage.removeItem('authToken');
+
+                showNotification('Logged out successfully.', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+            // Utility to show/hide loading spinner
+            function toggleSpinner(spinnerId, show) {
+                const spinner = document.getElementById(spinnerId);
+                if (spinner) {
+                    spinner.style.display = show ? 'block' : 'none';
+                }
+            }
+
+            // Utility to show notification
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white z-50`;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            }
+
+            // Helper function to display responses
+            function displayResponse(responseElement, jsonElement, message, isError = false, jsonData = null) {
+                if (responseElement && jsonElement) {
+                    responseElement.textContent = message;
+                    responseElement.classList.remove('hidden');
+                    responseElement.classList.toggle('bg-red-500', isError);
+                    responseElement.classList.toggle('bg-green-500', !isError);
+                    if (jsonData) {
+                        jsonElement.textContent = JSON.stringify(jsonData, null, 2);
+                        jsonElement.classList.remove('hidden');
+                    } else {
+                        jsonElement.classList.add('hidden');
+                    }
+                }
+            }
+
+            // Fetch student profile by user_id
+            async function fetchStudentProfile() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('user_id');
+                const studentError = document.getElementById('studentError');
+
+                if (!userId) {
+                    if (studentError) {
+                        studentError.textContent = 'User ID not found in URL.';
+                        studentError.classList.remove('hidden');
+                    }
+                    showNotification('User ID not found in URL.', 'error');
+                    return null;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:3000/students/user/${userId}`);
+                    const data = await response.json();
+                    if (response.ok) {
+                        const student = data;
+                        const studentName = document.getElementById('studentName');
+                        const studentMatricNumber = document.getElementById('studentMatricNumber');
+                        const studentIdEl = document.getElementById('studentId');
+                        const studentEmail = document.getElementById('studentEmail');
+                        const studentDepartment = document.getElementById('studentDepartment');
+                        const studentLevel = document.getElementById('studentLevel');
+                        const studentGender = document.getElementById('studentGender');
+
+                        if (studentName) studentName.textContent = `${student.first_name} ${student.last_name}`;
+                        if (studentMatricNumber) studentMatricNumber.textContent = student.matriculation_number;
+                        if (studentIdEl) studentIdEl.textContent = student.student_id;
+                        if (studentEmail) studentEmail.textContent = student.email;
+                        if (studentDepartment) studentDepartment.textContent = `${student.department_name} (${student.department_id})`;
+                        if (studentLevel) studentLevel.textContent = student.level_id || 'N/A';
+                        if (studentGender) studentGender.textContent = student.gender || 'N/A';
+
+                        return { studentId: student.student_id, departmentId: student.department_id };
+                    } else {
+                        if (studentError) {
+                            studentError.textContent = data.error || 'Failed to fetch student info.';
+                            studentError.classList.remove('hidden');
+                        }
+                        showNotification(data.error || 'Failed to fetch student info.', 'error');
+                        return null;
+                    }
+                } catch (error) {
+                    if (studentError) {
+                        studentError.textContent = 'Error fetching student info.';
+                        studentError.classList.remove('hidden');
+                    }
+                    showNotification('Error fetching student info.', 'error');
+                    console.error('Error:', error);
+                    return null;
+                }
+            }
+
+            // Fetch department courses
+            async function fetchCourses(departmentId) {
+                const coursesTable = document.getElementById('coursesTable');
+                const coursesError = document.getElementById('coursesError');
+                const loadingRow = document.getElementById('loadingRow');
+
+                if (!coursesTable || !coursesError || !loadingRow) return;
+
+                coursesTable.innerHTML = '';
+                coursesError.classList.add('hidden');
+                loadingRow.classList.remove('hidden');
+
+                try {
+                    const response = await fetch(`http://localhost:3000/courses/department/${departmentId}`);
+                    const data = await response.json();
+
+                    loadingRow.classList.add('hidden');
+
+                    if (response.ok && Array.isArray(data.courses)) {
+                        if (data.courses.length === 0) {
+                            coursesTable.innerHTML = `<tr><td colspan="4" class="border p-2 text-center">No courses found in this department.</td></tr>`;
+                            showNotification('No courses found in this department.', 'info');
+                        } else {
+                            data.courses.forEach(course => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="border p-2">${course.course_id}</td>
+                                    <td class="border p-2">${course.course_code}</td>
+                                    <td class="border p-2">${course.course_title || course.title}</td>
+                                    <td class="border p-2">${course.department_id}</td>
+                                `;
+                                coursesTable.appendChild(row);
+                            });
+                            showNotification('Courses fetched successfully.', 'success');
+                        }
+                    } else {
+                        coursesError.textContent = data.error || 'Failed to fetch courses.';
+                        coursesError.classList.remove('hidden');
+                        showNotification(data.error || 'Failed to fetch courses.', 'error');
+                    }
+                } catch (error) {
+                    loadingRow.classList.add('hidden');
+                    coursesError.textContent = 'Error fetching courses: ' + error.message;
+                    coursesError.classList.remove('hidden');
+                    showNotification('Error fetching courses.', 'error');
+                    console.error('Error fetching courses:', error);
+                }
+            }
+
+            // Fetch student's results
+            async function fetchResults(studentId) {
+                const resultsTable = document.getElementById('resultsTable');
+                const resultsError = document.getElementById('resultsError');
+                const resultsJsonElement = document.getElementById('resultsJsonResponse');
+
+                if (!resultsTable || !resultsError || !resultsJsonElement) return;
+
+                resultsTable.innerHTML = '<tr><td colspan="7" class="border p-2 text-center">Loading...</td></tr>';
+                resultsJsonElement.classList.add('hidden');
+
+                try {
+                    const response = await fetch(`http://localhost:3000/students/${studentId}/results`);
+                    const data = await response.json();
+                    resultsTable.innerHTML = '';
+
+                    if (response.ok && Array.isArray(data.results)) {
+                        if (data.results.length === 0) {
+                            resultsTable.innerHTML = '<tr><td colspan="7" class="border p-2 text-center">No results found.</td></tr>';
+                            showNotification('No results found.', 'info');
+                        } else {
+                            data.results.forEach(result => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="border p-2">${result.result_id}</td>
+                                    <td class="border p-2">${result.course_code}</td>
+                                    <td class="border p-2">${result.semester_id}</td>
+                                    <td class="border p-2">${result.score}</td>
+                                    <td class="border p-2">${result.grade}</td>
+                                    <td class="border p-2">${result.grade_point}</td>
+                                    <td class="border p-2">${result.session_id}</td>
+                                `;
+                                resultsTable.appendChild(row);
+                            });
+                            showNotification('Results fetched successfully.', 'success');
+                        }
+                        resultsJsonElement.textContent = JSON.stringify(data, null, 2);
+                        resultsJsonElement.classList.remove('hidden');
+                    } else {
+                        resultsTable.innerHTML = '<tr><td colspan="7" class="border p-2 text-center">Error: ' + (data.error || 'Failed to fetch results.') + '</td></tr>';
+                        resultsJsonElement.textContent = JSON.stringify(data, null, 2);
+                        resultsJsonElement.classList.remove('hidden');
+                        showNotification(data.error || 'Failed to fetch results.', 'error');
+                    }
+                } catch (error) {
+                    resultsTable.innerHTML = '<tr><td colspan="7" class="border p-2 text-center">Error fetching results: ' + error.message + '</td></tr>';
+                    resultsJsonElement.textContent = JSON.stringify({ error: error.message }, null, 2);
+                    resultsJsonElement.classList.remove('hidden');
+                    showNotification('Error fetching results.', 'error');
+                    console.error('Error fetching results:', error);
+                }
+            }
+
+            // Search results by course code
+            async function searchResultsByCourse(event, studentId) {
+                event.preventDefault();
+                const searchForm = document.getElementById('searchResultForm');
+                const searchResponseElement = document.getElementById('searchResultResponse');
+                const searchJsonElement = document.getElementById('searchResultJsonResponse');
+                const searchResultsTable = document.getElementById('searchResultsTable');
+                const searchResultsError = document.getElementById('searchResultsError');
+
+                if (!searchForm || !searchResponseElement || !searchJsonElement || !searchResultsTable || !searchResultsError) return;
+
+                const formData = new FormData(searchForm);
+                const courseCode = formData.get('courseCode').trim().toUpperCase();
+
+                if (!courseCode) {
+                    displayResponse(searchResponseElement, searchJsonElement, 'Course Code is required.', true);
+                    showNotification('Course Code is required.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:3000/students/${studentId}/results/course/code/${courseCode}`);
+                    const data = await response.json();
+                    searchResultsTable.classList.add('hidden');
+                    searchResultsTable.querySelector('tbody').innerHTML = '';
+                    searchResultsError.classList.add('hidden');
+
+                    if (response.ok && Array.isArray(data.results)) {
+                        if (data.results.length === 0) {
+                            displayResponse(searchResponseElement, searchJsonElement, `No results found for course code ${courseCode}.`, true);
+                            showNotification(`No results found for course code ${courseCode}.`, 'info');
+                        } else {
+                            data.results.forEach(result => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="border p-2">${result.result_id}</td>
+                                    <td class="border p-2">${result.course_code}</td>
+                                    <td class="border p-2">${result.semester_id}</td>
+                                    <td class="border p-2">${result.score}</td>
+                                    <td class="border p-2">${result.grade}</td>
+                                    <td class="border p-2">${result.grade_point}</td>
+                                    <td class="border p-2">${result.session_id}</td>
+                                `;
+                                searchResultsTable.querySelector('tbody').appendChild(row);
+                            });
+                            searchResultsTable.classList.remove('hidden');
+                            displayResponse(searchResponseElement, searchJsonElement, `Found ${data.results.length} results for course code ${courseCode}.`, false, data);
+                            showNotification('Results fetched successfully.', 'success');
+                        }
+                        searchJsonElement.textContent = JSON.stringify(data, null, 2);
+                        searchJsonElement.classList.remove('hidden');
+                    } else {
+                        displayResponse(searchResponseElement, searchJsonElement, data.error || 'Failed to fetch results.', true, data);
+                        showNotification(data.error || 'Failed to fetch results.', 'error');
+                    }
+                } catch (error) {
+                    displayResponse(searchResponseElement, searchJsonElement, 'Error fetching results: ' + error.message, true, { error: error.message });
+                    showNotification('Error fetching results.', 'error');
+                    console.error('Error fetching results:', error);
+                }
+            }
+
+            // Initialize dashboard
+            async function initDashboard() {
+                toggleSpinner('loading', true);
+                const studentData = await fetchStudentProfile();
+                if (studentData) {
+                    const { studentId, departmentId } = studentData;
+
+                    // Bind search form handler
+                    const searchForm = document.getElementById('searchResultForm');
+                    if (searchForm) searchForm.addEventListener('submit', (event) => searchResultsByCourse(event, studentId));
+
+                    await Promise.all([
+                        fetchCourses(departmentId),
+                        fetchResults(studentId)
+                    ]);
+                }
+                toggleSpinner('loading', false);
+            }
+
+            // Start dashboard
+            initDashboard();
+        });
+    </script>
+</body>
+</html>

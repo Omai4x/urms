@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - URMS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-gray-800 text-white p-4 overflow-y-auto md:transform-none">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">URMS Admin Dashboard</h2>
+            <button id="closeSidebar" class="md:hidden text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <nav>
+            <ul class="space-y-2">
+                <li><a href="index.html" class="block p-2 hover:bg-gray-700 rounded">Home</a></li>
+                <li><a href="lecturers.html" class="block p-2 hover:bg-gray-700 rounded">Lecturers</a></li>
+                <li><a href="students.html" class="block p-2 hover:bg-gray-700 rounded">Students</a></li>
+                <li><a href="pending-students.html" class="block p-2 hover:bg-gray-700 rounded">Pending Students</a></li>
+                <li><a href="departments.html" class="block p-2 hover:bg-gray-700 rounded">Departments</a></li>
+                <li><a href="courses.html" class="block p-2 hover:bg-gray-700 rounded">Courses</a></li>
+                <li><a href="student-courses.html" class="block p-2 hover:bg-gray-700 rounded">Student Courses</a></li>
+                <li><a href="login.html" class="block p-2 hover:bg-gray-700 rounded">Logout</a></li><li><a href="results.html" class="block p-2 bg-gray-700 rounded">Results</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 p-6 min-h-screen">
+        <!-- Hamburger Menu for Mobile -->
+        <button id="openSidebar" class="md:hidden mb-4 p-2 bg-gray-800 text-white rounded focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="spinner mx-auto"></div>
+
+        <!-- Results Section -->
+        <section id="results" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Manage Results</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <!-- Post New Result -->
+                <h3 class="text-lg font-semibold mb-2">Post New Result</h3>
+                <form id="postResultForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" name="student_id" placeholder="Student ID" class="p-2 border rounded" required>
+                    <input type="text" name="course_id" placeholder="Course ID" class="p-2 border rounded" required>
+                    <input type="text" name="semester_id" placeholder="Semester ID" class="p-2 border rounded" required>
+                    <input type="number" name="score" placeholder="Score (0-100)" class="p-2 border rounded" required min="0" max="100">
+                    <input type="text" name="session_id" placeholder="Session ID" class="p-2 border rounded" required>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 w-full">Post Result</button>
+                    </div>
+                </form>
+                <div id="postResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="postResultJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- Update Result -->
+                <h3 class="text-lg font-semibold mb-2">Update Result</h3>
+                <form id="updateResultForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" name="resultId" placeholder="Result ID" class="p-2 border rounded" required>
+                    <input type="number" name="score" placeholder="New Score (0-100)" class="p-2 border rounded" required min="0" max="100">
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 w-full">Update Result</button>
+                    </div>
+                </form>
+                <div id="updateResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="updateResultJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- Delete Result -->
+                <h3 class="text-lg font-semibold mb-2">Delete Result</h3>
+                <form id="deleteResultForm" class="flex gap-2 mb-4">
+                    <input type="text" name="resultId" placeholder="Result ID" class="p-2 border rounded flex-1" required>
+                    <button type="submit" class="bg-red-500 text-white p-2 rounded hover:bg-red-600">Delete</button>
+                </form>
+                <div id="deleteResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="deleteResultJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- All Results -->
+                <h3 class="text-lg font-semibold mb-2">All Results</h3>
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Result ID</th>
+                            <th class="border p-2">Student ID</th>
+                            <th class="border p-2">Course ID</th>
+                            <th class="border p-2">Semester ID</th>
+                            <th class="border p-2">Score</th>
+                            <th class="border p-2">Grade</th>
+                            <th class="border p-2">Grade Point</th>
+                            <th class="border p-2">Session ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTable"></tbody>
+                </table>
+                <pre id="resultsJsonResponse" class="hidden p-4 mt-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Sidebar toggle
+        const openSidebarBtn = document.getElementById('openSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const loading = document.getElementById('loading');
+
+        openSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+        });
+
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+
+        // Notification and JSON response function
+        function showNotification(message, type = 'success', elementId = 'notification', jsonResponse = null, jsonElementId = null) {
+            const notification = document.getElementById(elementId);
+            notification.textContent = message;
+            notification.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+            notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+
+            if (jsonResponse !== null && jsonElementId) {
+                const jsonBox = document.getElementById(jsonElementId);
+                jsonBox.textContent = '';
+                jsonBox.textContent = JSON.stringify(jsonResponse, null, 2);
+                jsonBox.classList.remove('hidden', 'border-green-500', 'border-red-500');
+                jsonBox.classList.add(type === 'success' ? 'border-green-500' : 'border-red-500');
+            }
+        }
+
+        // Show/hide loading indicator
+        function toggleLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // Fetch and display all results
+        async function fetchResults() {
+            toggleLoading(true);
+            try {
+                const response = await fetch(`${API_URL}/results`);
+                const results = await response.json();
+                const tableBody = document.getElementById('resultsTable');
+                tableBody.innerHTML = '';
+                if (Array.isArray(results)) {
+                    results.forEach(result => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="border p-2">${result.result_id || 'N/A'}</td>
+                            <td class="border p-2">${result.student_id || 'N/A'}</td>
+                            <td class="border p-2">${result.course_id || 'N/A'}</td>
+                            <td class="border p-2">${result.semester_id || 'N/A'}</td>
+                            <td class="border p-2">${result.score || 'N/A'}</td>
+                            <td class="border p-2">${result.grade || 'N/A'}</td>
+                            <td class="border p-2">${result.grade_point || 'N/A'}</td>
+                            <td class="border p-2">${result.session_id || 'N/A'}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    showNotification('Results fetched successfully', 'success', 'postResultResponse', results, 'resultsJsonResponse');
+                } else {
+                    showNotification('Unexpected response format', 'error', 'postResultResponse', results, 'resultsJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Failed to fetch results', 'error', 'postResultResponse', { error: error.message }, 'resultsJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Post new result
+        document.getElementById('postResultForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const postData = Object.fromEntries(formData);
+            // Convert score to a number
+            postData.score = Number(postData.score);
+            try {
+                const response = await fetch(`${API_URL}/results`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(postData)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('Result posted successfully', 'success', 'postResultResponse', result, 'postResultJsonResponse');
+                    e.target.reset();
+                    fetchResults();
+                } else {
+                    showNotification(result.error || 'Failed to post result', 'error', 'postResultResponse', result, 'postResultJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Error posting result', 'error', 'postResultResponse', { error: error.message }, 'postResultJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Update result
+        document.getElementById('updateResultForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const updateData = Object.fromEntries(formData);
+            const resultId = updateData.resultId;
+            const updatePayload = { score: Number(updateData.score) };
+            try {
+                const response = await fetch(`${API_URL}/results/${resultId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatePayload)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('Result updated successfully', 'success', 'updateResultResponse', result, 'updateResultJsonResponse');
+                    e.target.reset();
+                    fetchResults();
+                } else {
+                    showNotification(result.error || 'Failed to update result', 'error', 'updateResultResponse', result, 'updateResultJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Error updating result', 'error', 'updateResultResponse', { error: error.message }, 'updateResultJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Delete result
+        document.getElementById('deleteResultForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const { resultId } = Object.fromEntries(formData);
+            try {
+                const response = await fetch(`${API_URL}/results/${resultId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('Result deleted successfully', 'success', 'deleteResultResponse', result, 'deleteResultJsonResponse');
+                    e.target.reset();
+                    fetchResults();
+                } else {
+                    showNotification(result.error || 'Failed to delete result', 'error', 'deleteResultResponse', result, 'deleteResultJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Error deleting result', 'error', 'deleteResultResponse', { error: error.message }, 'deleteResultJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Initial fetch
+        fetchResults();
+    </script>
+</body>
+</html>

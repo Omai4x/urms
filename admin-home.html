@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="urm.png" type="image/png" sizes="64x64">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URMS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-gray-800 text-white p-4 overflow-y-auto md:transform-none">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">URMS Admin Dashboard</h2>
+            <button id="closeSidebar" class="md:hidden text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <nav>
+            <ul class="space-y-2">
+                <li><a href="lecturers.html" class="block p-2 hover:bg-gray-700 rounded">Lecturers</a></li>
+                <li><a href="students.html" class="block p-2 hover:bg-gray-700 rounded">Students</a></li>
+                <li><a href="pending-students.html" class="block p-2 hover:bg-gray-700 rounded">Pending Students</a></li>
+                <li><a href="departments.html" class="block p-2 hover:bg-gray-700 rounded">Departments</a></li>
+                <li><a href="courses.html" class="block p-2 hover:bg-gray-700 rounded">Courses</a></li>
+                <li><a href="student-courses.html" class="block p-2 hover:bg-gray-700 rounded">Student Courses</a></li>
+                <li><a href="login.html" class="block p-2 hover:bg-gray-700 rounded">Logout</a></li><li><a href="results.html" class="block p-2 hover:bg-gray-700 rounded">Results</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 p-6 min-h-screen">
+        <!-- Hamburger Menu for Mobile -->
+        <button id="openSidebar" class="md:hidden mb-4 p-2 bg-gray-800 text-white rounded focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+
+        <!-- Welcome Message -->
+        <div class="bg-white p-6 rounded shadow">
+            <h1 class="text-3xl font-bold mb-4">Welcome to URMS Admin Dashboard</h1>
+            <p class="text-gray-600">Select a section from the sidebar to manage university resources.</p>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle
+        const openSidebarBtn = document.getElementById('openSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebar = document.getElementById('sidebar');
+
+        openSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+        });
+
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+    </script>
+</body>
+</html>

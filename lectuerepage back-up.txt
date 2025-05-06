@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="urm.png" type="image/png" sizes="64x64">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecturer Dashboard - URMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-gray-800 text-white p-4 overflow-y-auto md:transform-none">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">URMS Lecturer Dashboard</h2>
+            <button id="closeSidebar" class="md:hidden text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <nav>
+            <ul class="space-y-2">
+                <li><a href="#" class="block p-2 hover:bg-gray-700 rounded">Dashboard</a></li>
+                <li><a href="courses.html" class="block p-2 hover:bg-gray-700 rounded">Courses</a></li>
+                <li><a href="results.html" class="block p-2 hover:bg-gray-700 rounded">Results</a></li>
+                <li><a href="logout.html" class="block p-2 hover:bg-gray-700 rounded">Logout</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 p-6 min-h-screen">
+        <!-- Hamburger Menu for Mobile -->
+        <button id="openSidebar" class="md:hidden mb-4 p-2 bg-gray-800 text-white rounded focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="spinner mx-auto"></div>
+
+        <!-- Lecturer Info -->
+        <section id="lecturerInfo" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Your Profile</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <div id="lecturerDetails" class="space-y-2">
+                    <p><strong>Name:</strong> <span id="lecturerName"></span></p>
+                    <p><strong>Staff ID:</strong> <span id="lecturerStaffId"></span></p>
+                    <p><strong>Email:</strong> <span id="lecturerEmail"></span></p>
+                    <p><strong>Department:</strong> <span id="lecturerDepartment"></span></p>
+                </div>
+                <div id="lecturerError" class="hidden p-4 mb-4 bg-red-500 text-white rounded"></div>
+            </div>
+        </section>
+
+        <!-- Students List -->
+        <section id="studentsList" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Students in Your Department</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Student Id</th>
+                            <th class="border p-2">Matric Number</th>
+                            <th class="border p-2">Name</th>
+                            <th class="border p-2">Level</th>
+                            <th class="border p-2">Gender</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTable"></tbody>
+                </table>
+                <div id="studentsError" class="hidden p-4 mt-4 bg-red-500 text-white rounded"></div>
+            </div>
+        </section>
+
+        <!-- Courses List -->
+        <section id="coursesList" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Your Department Courses</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Course ID</th>
+                            <th class="border p-2">Course Code</th>
+                            <th class="border p-2">Course Title</th>
+                            <th class="border p-2">Department ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesTable">
+                        <tr id="loadingRow" class="hidden">
+                            <td colspan="4" class="border p-2 text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="coursesError" class="hidden p-4 mt-4 bg-red-500 text-white rounded"></div>
+            </div>
+        </section>
+
+        <!-- Results List -->
+        <section id="resultsList" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Manage Results</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <!-- Find Student Results -->
+                <h3 class="text-lg font-semibold mb-2">Find Student Results by Matriculation Number</h3>
+                <form id="findResultForm" class="flex gap-2 mb-4">
+                    <input type="text" name="matriculationNumber" placeholder="Matriculation Number" class="p-2 border rounded flex-1" required>
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Search</button>
+                </form>
+                <div id="findResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <table id="studentResultsTable" class="w-full border-collapse hidden">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Result ID</th>
+                            <th class="border p-2">Student ID</th>
+                            <th class="border p-2">Course ID</th>
+                            <th class="border p-2">Semester ID</th>
+                            <th class="border p-2">Score</th>
+                            <th class="border p-2">Grade</th>
+                            <th class="border p-2">Grade Point</th>
+                            <th class="border p-2">Session ID</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <pre id="findResultJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- Post New Result -->
+                <h3 class="text-lg font-semibold mb-2">Post New Result</h3>
+                <form id="postResultForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" name="student_id" placeholder="Student ID" class="p-2 border rounded" required>
+                    <input type="text" name="course_id" placeholder="Course ID" class="p-2 border rounded" required>
+                    <input type="text" name="semester_id" placeholder="Semester ID" class="p-2 border rounded" required>
+                    <input type="number" name="score" placeholder="Score (0-100)" class="p-2 border rounded" required min="0" max="100">
+                    <input type="text" name="session_id" placeholder="Session ID" class="p-2 border rounded" required>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 w-full">Post Result</button>
+                    </div>
+                </form>
+                <div id="postResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="postResultJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- Update Result -->
+                <h3 class="text-lg font-semibold mb-2">Update Result</h3>
+                <form id="updateResultForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" name="resultId" placeholder="Result ID" class="p-2 border rounded" required>
+                    <input type="number" name="score" placeholder="New Score (0-100)" class="p-2 border rounded" required min="0" max="100">
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 w-full">Update Result</button>
+                    </div>
+                </form>
+                <div id="updateResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="updateResultJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- Delete Result -->
+                <h3 class="text-lg font-semibold mb-2">Delete Result</h3>
+                <form id="deleteResultForm" class="flex gap-2 mb-4">
+                    <input type="text" name="resultId" placeholder="Result ID" class="p-2 border rounded flex-1" required>
+                    <button type="submit" class="bg-red-500 text-white p-2 rounded hover:bg-red-600">Delete</button>
+                </form>
+                <div id="deleteResultResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="deleteResultJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- All Results -->
+                <h3 class="text-lg font-semibold mb-2">All Results</h3>
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Result ID</th>
+                            <th class="border p-2">Student ID</th>
+                            <th class="border p-2">Course ID</th>
+                            <th class="border p-2">Semester ID</th>
+                            <th class="border p-2">Score</th>
+                            <th class="border p-2">Grade</th>
+                            <th class="border p-2">Grade Point</th>
+                            <th class="border p-2">Session ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTable"></tbody>
+                </table>
+                <pre id="resultsJsonResponse" class="hidden p-4 mt-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sidebar toggle
+            const openSidebarBtn = document.getElementById('openSidebar');
+            const closeSidebarBtn = document.getElementById('closeSidebar');
+            const sidebar = document.getElementById('sidebar');
+
+            if (openSidebarBtn && closeSidebarBtn && sidebar) {
+                openSidebarBtn.addEventListener('click', () => {
+                    sidebar.classList.add('open');
+                });
+
+                closeSidebarBtn.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                });
+            }
+
+            // Result management elements
+            const findForm = document.getElementById('findResultForm');
+            const findResponseElement = document.getElementById('findResultResponse');
+            const findJsonElement = document.getElementById('findResultJsonResponse');
+            const studentResultsTable = document.getElementById('studentResultsTable');
+            const postForm = document.getElementById('postResultForm');
+            const updateForm = document.getElementById('updateResultForm');
+            const deleteForm = document.getElementById('deleteResultForm');
+            const resultsTable = document.getElementById('resultsTable');
+            const postResponseElement = document.getElementById('postResultResponse');
+            const postJsonElement = document.getElementById('postResultJsonResponse');
+            const updateResponseElement = document.getElementById('updateResultResponse');
+            const updateJsonElement = document.getElementById('updateResultJsonResponse');
+            const deleteResponseElement = document.getElementById('deleteResultResponse');
+            const deleteJsonElement = document.getElementById('deleteResultJsonResponse');
+            const resultsJsonElement = document.getElementById('resultsJsonResponse');
+
+            // Utility to show/hide loading spinner
+            function toggleSpinner(spinnerId, show) {
+                const spinner = document.getElementById(spinnerId);
+                if (spinner) {
+                    spinner.style.display = show ? 'block' : 'none';
+                }
+            }
+
+            // Utility to show notification
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white z-50`;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            }
+
+            // Helper function to display responses for result management
+            function displayResponse(responseElement, jsonElement, message, isError = false, jsonData = null) {
+                if (responseElement && jsonElement) {
+                    responseElement.textContent = message;
+                    responseElement.classList.remove('hidden');
+                    responseElement.classList.toggle('bg-red-500', isError);
+                    responseElement.classList.toggle('bg-green-500', !isError);
+                    if (jsonData) {
+                        jsonElement.textContent = JSON.stringify(jsonData, null, 2);
+                        jsonElement.classList.remove('hidden');
+                    } else {
+                        jsonElement.classList.add('hidden');
+                    }
+                }
+            }
+
+            // Fetch lecturer info
+            async function fetchLecturerInfo() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const staffId = urlParams.get('user_id');
+                const lecturerError = document.getElementById('lecturerError');
+
+                if (!staffId) {
+                    if (lecturerError) {
+                        lecturerError.textContent = 'Staff ID not found in URL.';
+                        lecturerError.classList.remove('hidden');
+                    }
+                    showNotification('Staff ID not found in URL.', 'error');
+                    return null;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:3000/staff/${staffId}`);
+                    const data = await response.json();
+                    if (response.ok) {
+                        const staff = data;
+                        const lecturerName = document.getElementById('lecturerName');
+                        const lecturerStaffId = document.getElementById('lecturerStaffId');
+                        const lecturerEmail = document.getElementById('lecturerEmail');
+                        const lecturerDepartment = document.getElementById('lecturerDepartment');
+
+                        if (lecturerName) lecturerName.textContent = `${staff.first_name} ${staff.last_name}`;
+                        if (lecturerStaffId) lecturerStaffId.textContent = staff.staff_id;
+                        if (lecturerEmail) lecturerEmail.textContent = staff.email;
+                        if (lecturerDepartment) lecturerDepartment.textContent = `${staff.department_name} (${staff.department_id})`;
+
+                        return { departmentId: staff.department_id, staff };
+                    } else {
+                        if (lecturerError) {
+                            lecturerError.textContent = data.error || 'Failed to fetch staff info.';
+                            lecturerError.classList.remove('hidden');
+                        }
+                        showNotification(data.error || 'Failed to fetch staff info.', 'error');
+                        return null;
+                    }
+                } catch (error) {
+                    if (lecturerError) {
+                        lecturerError.textContent = 'Error fetching staff info.';
+                        lecturerError.classList.remove('hidden');
+                    }
+                    showNotification('Error fetching staff info.', 'error');
+                    console.error('Error:', error);
+                    return null;
+                }
+            }
+
+            // Fetch students in lecturer's department
+            async function fetchStudents(departmentId) {
+                const studentsTable = document.getElementById('studentsTable');
+                const studentsError = document.getElementById('studentsError');
+
+                if (!studentsTable || !studentsError) return;
+
+                try {
+                    const response = await fetch(`http://localhost:3000/students/department/${departmentId}`);
+                    const data = await response.json();
+
+                    studentsTable.innerHTML = '';
+
+                    if (response.ok) {
+                        if (data.length === 0) {
+                            studentsTable.innerHTML = '<tr><td colspan="5" class="border p-2 text-center">No students found in this department.</td></tr>';
+                            showNotification('No students found in this department.', 'info');
+                            return;
+                        }
+
+                        data.forEach(student => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="border p-2">${student.student_id}</td>
+                                <td class="border p-2">${student.matriculation_number}</td>
+                                <td class="border p-2">${student.first_name} ${student.last_name}</td>
+                                <td class="border p-2">${student.level_id || 'N/A'}</td>
+                                <td class="border p-2">${student.gender || 'N/A'}</td>
+                            `;
+                            studentsTable.appendChild(row);
+                        });
+                        showNotification('Students fetched successfully.', 'success');
+                    } else {
+                        studentsError.textContent = data.error || 'Failed to fetch students.';
+                        studentsError.classList.remove('hidden');
+                        showNotification(data.error || 'Failed to fetch students.', 'error');
+                    }
+                } catch (error) {
+                    studentsError.textContent = 'Error fetching students.';
+                    studentsError.classList.remove('hidden');
+                    showNotification('Error fetching students.', 'error');
+                    console.error('Error:', error);
+                }
+            }
+
+            // Fetch courses in lecturer's department
+            async function fetchCourses(departmentId) {
+                const coursesTable = document.getElementById('coursesTable');
+                const coursesError = document.getElementById('coursesError');
+                const loadingRow = document.getElementById('loadingRow');
+
+                if (!coursesTable || !coursesError || !loadingRow) return;
+
+                coursesTable.innerHTML = '';
+                coursesError.classList.add('hidden');
+                loadingRow.classList.remove('hidden');
+
+                try {
+                    const response = await fetch(`http://localhost:3000/courses/department/${departmentId}`);
+                    const data = await response.json();
+
+                    loadingRow.classList.add('hidden');
+
+                    if (response.ok && Array.isArray(data.courses)) {
+                        if (data.courses.length === 0) {
+                            coursesTable.innerHTML = `<tr><td colspan="4" class="border p-2 text-center">No courses found.</td></tr>`;
+                            showNotification('No courses found.', 'info');
+                        } else {
+                            data.courses.forEach(course => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="border p-2">${course.course_id}</td>
+                                    <td class="border p-2">${course.course_code}</td>
+                                    <td class="border p-2">${course.course_title || course.title}</td>
+                                    <td class="border p-2">${course.department_id}</td>
+                                `;
+                                coursesTable.appendChild(row);
+                            });
+                            showNotification('Courses fetched successfully.', 'success');
+                        }
+                    } else {
+                        coursesError.textContent = data.error || 'Failed to fetch courses.';
+                        coursesError.classList.remove('hidden');
+                        showNotification(data.error || 'Failed to fetch courses.', 'error');
+                    }
+                } catch (error) {
+                    loadingRow.classList.add('hidden');
+                    coursesError.textContent = 'Error fetching courses: ' + error.message;
+                    coursesError.classList.remove('hidden');
+                    showNotification('Error fetching courses.', 'error');
+                    console.error('Error fetching courses:', error);
+                }
+            }
+
+            // Fetch and display all results for a department
+            async function fetchResults(departmentId) {
+                if (!resultsTable || !resultsJsonElement) return;
+
+                resultsTable.innerHTML = '<tr><td colspan="8" class="border p-2 text-center">Loading...</td></tr>';
+                resultsJsonElement.classList.add('hidden');
+
+                try {
+                    const response = await fetch(`http://localhost:3000/results/department/${departmentId}`);
+                    const data = await response.json();
+                    resultsTable.innerHTML = '';
+
+                    if (response.ok && Array.isArray(data.results)) {
+                        if (data.results.length === 0) {
+                            resultsTable.innerHTML = '<tr><td colspan="8" class="border p-2 text-center">No results found.</td></tr>';
+                            showNotification('No results found.', 'info');
+                        } else {
+                            data.results.forEach(result => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="border p-2">${result.result_id}</td>
+                                    <td class="border p-2">${result.student_id}</td>
+                                    <td class="border p-2">${result.course_id}</td>
+                                    <td class="border p-2">${result.semester_id}</td>
+                                    <td class="border p-2">${result.score}</td>
+                                    <td class="border p-2">${result.grade}</td>
+                                    <td class="border p-2">${result.grade_point}</td>
+                                    <td class="border p-2">${result.session_id}</td>
+                                `;
+                                resultsTable.appendChild(row);
+                            });
+                            showNotification('Results fetched successfully.', 'success');
+                        }
+                        resultsJsonElement.textContent = JSON.stringify(data, null, 2);
+                        resultsJsonElement.classList.remove('hidden');
+                    } else {
+                        resultsTable.innerHTML = '<tr><td colspan="8" class="border p-2 text-center">Error: ' + (data.error || 'Failed to fetch results.') + '</td></tr>';
+                        resultsJsonElement.textContent = JSON.stringify(data, null, 2);
+                        resultsJsonElement.classList.remove('hidden');
+                        showNotification(data.error || 'Failed to fetch results.', 'error');
+                    }
+                } catch (error) {
+                    resultsTable.innerHTML = '<tr><td colspan="8" class="border p-2 text-center">Error fetching results: ' + error.message + '</td></tr>';
+                    resultsJsonElement.textContent = JSON.stringify({ error: error.message }, null, 2);
+                    resultsJsonElement.classList.remove('hidden');
+                    showNotification('Error fetching results.', 'error');
+                    console.error('Error fetching results:', error);
+                }
+            }
+
+            // Find student results by matriculation number
+            async function findStudentResults(event, departmentId) {
+                event.preventDefault();
+                if (!findForm || !findResponseElement || !findJsonElement || !studentResultsTable) return;
+
+                const formData = new FormData(findForm);
+                const matriculationNumber = formData.get('matriculationNumber').trim();
+
+                if (!matriculationNumber) {
+                    displayResponse(findResponseElement, findJsonElement, 'Matriculation Number is required.', true);
+                    showNotification('Matriculation Number is required.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:3000/results/student/${matriculationNumber}`);
+                    const data = await response.json();
+                    studentResultsTable.classList.add('hidden');
+                    studentResultsTable.querySelector('tbody').innerHTML = '';
+
+                    if (response.ok && Array.isArray(data.results)) {
+                        if (data.results.length === 0) {
+                            displayResponse(findResponseElement, findJsonElement, 'No results found for this student.', true);
+                            showNotification('No results found for this student.', 'info');
+                        } else {
+                            data.results.forEach(result => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="border p-2">${result.result_id}</td>
+                                    <td class="border p-2">${result.student_id}</td>
+                                    <td class="border p-2">${result.course_id}</td>
+                                    <td class="border p-2">${result.semester_id}</td>
+                                    <td class="border p-2">${result.score}</td>
+                                    <td class="border p-2">${result.grade}</td>
+                                    <td class="border p-2">${result.grade_point}</td>
+                                    <td class="border p-2">${result.session_id}</td>
+                                `;
+                                studentResultsTable.querySelector('tbody').appendChild(row);
+                            });
+                            studentResultsTable.classList.remove('hidden');
+                            displayResponse(findResponseElement, findJsonElement, `Found ${data.results.length} results for matriculation number ${matriculationNumber}.`, false, data);
+                            showNotification('Student results fetched successfully.', 'success');
+                        }
+                        findJsonElement.textContent = JSON.stringify(data, null, 2);
+                        findJsonElement.classList.remove('hidden');
+                    } else {
+                        displayResponse(findResponseElement, findJsonElement, data.error || 'Failed to fetch student results.', true, data);
+                        showNotification(data.error || 'Failed to fetch student results.', 'error');
+                    }
+                } catch (error) {
+                    displayResponse(findResponseElement, findJsonElement, 'Error fetching student results: ' + error.message, true, { error: error.message });
+                    showNotification('Error fetching student results.', 'error');
+                    console.error('Error fetching student results:', error);
+                }
+            }
+
+            // Post new result
+            async function postResult(event, departmentId) {
+                event.preventDefault();
+                if (!postForm || !postResponseElement || !postJsonElement) return;
+
+                const formData = new FormData(postForm);
+                const data = {
+                    student_id: formData.get('student_id').trim(),
+                    course_id: formData.get('course_id').trim(),
+                    semester_id: formData.get('semester_id').trim(),
+                    score: parseFloat(formData.get('score')),
+                    session_id: formData.get('session_id').trim()
+                };
+
+                if (!data.student_id || !data.course_id || !data.semester_id || isNaN(data.score) || !data.session_id) {
+                    displayResponse(postResponseElement, postJsonElement, 'All fields are required.', true);
+                    showNotification('All fields are required.', 'error');
+                    return;
+                }
+                if (data.score < 0 || data.score > 100) {
+                    displayResponse(postResponseElement, postJsonElement, 'Score must be between 0 and 100.', true);
+                    showNotification('Score must be between 0 and 100.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://localhost:3000/results', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    displayResponse(
+                        postResponseElement,
+                        postJsonElement,
+                        response.ok
+                            ? `Result posted successfully. Result ID: ${result.resultId}, Grade: ${result.grade}, Grade Point: ${result.grade_point}`
+                            : result.error || 'Failed to post result.',
+                        !response.ok,
+                        result
+                    );
+                    showNotification(
+                        response.ok ? 'Result posted successfully.' : result.error || 'Failed to post result.',
+                        response.ok ? 'success' : 'error'
+                    );
+                    if (response.ok) {
+                        postForm.reset();
+                        fetchResults(departmentId);
+                    }
+                } catch (error) {
+                    displayResponse(postResponseElement, postJsonElement, 'Error posting result: ' + error.message, true, { error: error.message });
+                    showNotification('Error posting result.', 'error');
+                    console.error('Error posting result:', error);
+                }
+            }
+
+            // Update result
+            async function updateResult(event, departmentId) {
+                event.preventDefault();
+                if (!updateForm || !updateResponseElement || !updateJsonElement) return;
+
+                const formData = new FormData(updateForm);
+                const resultId = formData.get('resultId').trim();
+                const score = parseFloat(formData.get('score'));
+
+                if (!resultId || isNaN(score)) {
+                    displayResponse(updateResponseElement, updateJsonElement, 'Result ID and score are required.', true);
+                    showNotification('Result ID and score are required.', 'error');
+                    return;
+                }
+                if (score < 0 || data.score > 100) {
+                    displayResponse(updateResponseElement, updateJsonElement, 'Score must be between 0 and 100.', true);
+                    showNotification('Score must be between 0 and 100.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:3000/results/${resultId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ score })
+                    });
+                    const result = await response.json();
+                    displayResponse(
+                        updateResponseElement,
+                        updateJsonElement,
+                        response.ok
+                            ? `Result updated successfully. Result ID: ${result.resultId}, New Grade: ${result.newGrade}, New Grade Point: ${result.newGradePoint}`
+                            : result.error || 'Failed to update result.',
+                        !response.ok,
+                        result
+                    );
+                    showNotification(
+                        response.ok ? 'Result updated successfully.' : result.error || 'Failed to update result.',
+                        response.ok ? 'success' : 'error'
+                    );
+                    if (response.ok) {
+                        updateForm.reset();
+                        fetchResults(departmentId);
+                    }
+                } catch (error) {
+                    displayResponse(updateResponseElement, updateJsonElement, 'Error updating result: ' + error.message, true, { error: error.message });
+                    showNotification('Error updating result.', 'error');
+                    console.error('Error updating result:', error);
+                }
+            }
+            function handleLogout() {
+    // Utility to show notification
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white z-50`;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Clear client-side session data (e.g., token)
+    localStorage.removeItem('authToken'); // Adjust key if different
+    sessionStorage.removeItem('authToken'); // Clear session storage if used
+
+    // Call backend logout endpoint
+    fetch('http://localhost:3000/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            // Include token if required: 'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (response.ok) {
+            showNotification('Logged out successfully.', 'success');
+            // Redirect to login page
+            setTimeout(() => {
+                window.location.href = '/login.html'; // Adjust URL as needed
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Failed to log out.', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error logging out: ' + error.message, 'error');
+        console.error('Error logging out:', error);
+    });
+}
+
+// Attach logout function to the logout button
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutLink = document.querySelector('a[href="logout.html"]');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default link navigation
+            handleLogout();
+        });
+    }
+});
+            // Delete result
+            async function deleteResult(event, departmentId) {
+                event.preventDefault();
+                if (!deleteForm || !deleteResponseElement || !deleteJsonElement) return;
+
+                const formData = new FormData(deleteForm);
+                const resultId = formData.get('resultId').trim();
+
+                if (!resultId) {
+                    displayResponse(deleteResponseElement, deleteJsonElement, 'Result ID is required.', true);
+                    showNotification('Result ID is required.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:3000/results/${resultId}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const result = await response.json();
+                    displayResponse(
+                        deleteResponseElement,
+                        deleteJsonElement,
+                        response.ok
+                            ? result.message
+                            : result.error || 'Failed to delete result.',
+                        !response.ok,
+                        result
+                    );
+                    showNotification(
+                        response.ok ? 'Result deleted successfully.' : result.error || 'Failed to delete result.',
+                        response.ok ? 'success' : 'error'
+                    );
+                    if (response.ok) {
+                        deleteForm.reset();
+                        fetchResults(departmentId);
+                    }
+                } catch (error) {
+                    displayResponse(deleteResponseElement, deleteJsonElement, 'Error deleting result: ' + error.message, true, { error: error.message });
+                    showNotification('Error deleting result.', 'error');
+                    console.error('Error deleting result:', error);
+                }
+            }
+
+            // Initialize dashboard
+            async function initDashboard() {
+                toggleSpinner('loading', true);
+                const lecturerData = await fetchLecturerInfo();
+                if (lecturerData) {
+                    const { departmentId } = lecturerData;
+
+                    // Bind form handlers with departmentId
+                    if (findForm) findForm.addEventListener('submit', (event) => findStudentResults(event, departmentId));
+                    if (postForm) postForm.addEventListener('submit', (event) => postResult(event, departmentId));
+                    if (updateForm) updateForm.addEventListener('submit', (event) => updateResult(event, departmentId));
+                    if (deleteForm) deleteForm.addEventListener('submit', (event) => deleteResult(event, departmentId));
+
+                    await Promise.all([
+                        fetchStudents(departmentId),
+                        fetchCourses(departmentId),
+                        fetchResults(departmentId)
+                    ]);
+                }
+                toggleSpinner('loading', false);
+            }
+
+            // Start dashboard
+            initDashboard();
+        });
+    </script>
+</body>
+</html>

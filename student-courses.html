@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Courses - URMS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-gray-800 text-white p-4 overflow-y-auto md:transform-none">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">URMS Admin Dashboard</h2>
+            <button id="closeSidebar" class="md:hidden text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <nav>
+            <ul class="space-y-2">
+                <li><a href="index.html" class="block p-2 hover:bg-gray-700 rounded">Home</a></li>
+                <li><a href="lecturers.html" class="block p-2 hover:bg-gray-700 rounded">Lecturers</a></li>
+                <li><a href="students.html" class="block p-2 hover:bg-gray-700 rounded">Students</a></li>
+                <li><a href="pending-students.html" class="block p-2 hover:bg-gray-700 rounded">Pending Students</a></li>
+                <li><a href="departments.html" class="block p-2 hover:bg-gray-700 rounded">Departments</a></li>
+                <li><a href="courses.html" class="block p-2 hover:bg-gray-700 rounded">Courses</a></li>
+                <li><a href="student-courses.html" class="block p-2 bg-gray-700 rounded">Student Courses</a></li>
+                <li><a href="login.html" class="block p-2 hover:bg-gray-700 rounded">Logout</a></li><li><a href="results.html" class="block p-2 hover:bg-gray-700 rounded">Results</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 p-6 min-h-screen">
+        <!-- Hamburger Menu for Mobile -->
+        <button id="openSidebar" class="md:hidden mb-4 p-2 bg-gray-800 text-white rounded focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="spinner mx-auto"></div>
+
+        <!-- Student Courses Section -->
+        <section id="studentCourses" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Manage Student Courses</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <!-- Assign Student to Course -->
+                <h3 class="text-lg font-semibold mb-2">Assign Student to Course</h3>
+                <form id="assignStudentCourseForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" name="studentId" placeholder="Student ID" class="p-2 border rounded" required>
+                    <input type="text" name="courseId" placeholder="Course ID" class="p-2 border rounded" required>
+                    <input type="text" name="sessionId" placeholder="Session ID" class="p-2 border rounded" required>
+                    <input type="text" name="semesterId" placeholder="Semester ID" class="p-2 border rounded" required>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 w-full">Assign Course</button>
+                    </div>
+                </form>
+                <div id="assignStudentCourseResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="assignStudentCourseJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <!-- Get All Student Courses -->
+                <h3 class="text-lg font-semibold mb-2">Get All Student Courses</h3>
+                <form id="getAllStudentCoursesForm" class="flex gap-2 mb-4">
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Get All Courses</button>
+                </form>
+                <div id="allStudentCoursesResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="allStudentCoursesJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+                <table class="w-full border-collapse mt-2">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Student Course ID</th>
+                            <th class="border p-2">Student ID</th>
+                            <th class="border p-2">Course ID</th>
+                            <th class="border p-2">Session ID</th>
+                            <th class="border p-2">Semester ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allStudentCoursesTable"></tbody>
+                </table>
+
+                <!-- Get Student's Courses -->
+                <h3 class="text-lg font-semibold mb-2">Get Student's Courses</h3>
+                <form id="getStudentCoursesForm" class="flex gap-2 mb-4">
+                    <input type="text" name="studentId" placeholder="Student ID" class="p-2 border rounded flex-1" required>
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Get Courses</button>
+                </form>
+                <div id="studentCoursesResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="studentCoursesJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+                <table class="w-full border-collapse mt-2">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Student Course ID</th>
+                            <th class="border p-2">Student ID</th>
+                            <th class="border p-2">Course ID</th>
+                            <th class="border p-2">Session ID</th>
+                            <th class="border p-2">Semester ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentCoursesTable"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Sidebar toggle
+        const openSidebarBtn = document.getElementById('openSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const loading = document.getElementById('loading');
+
+        openSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+        });
+
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+
+        // Notification and JSON response function
+        function showNotification(message, type = 'success', elementId = 'notification', jsonResponse = null, jsonElementId = null) {
+            const notification = document.getElementById(elementId);
+            notification.textContent = message;
+            notification.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+            notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+
+            if (jsonResponse !== null && jsonElementId) {
+                const jsonBox = document.getElementById(jsonElementId);
+                jsonBox.textContent = '';
+                jsonBox.textContent = JSON.stringify(jsonResponse, null, 2);
+                jsonBox.classList.remove('hidden', 'border-green-500', 'border-red-500');
+                jsonBox.classList.add(type === 'success' ? 'border-green-500' : 'border-red-500');
+            }
+        }
+
+        // Show/hide loading indicator
+        function toggleLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // Assign student to course
+        document.getElementById('assignStudentCourseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const assignData = Object.fromEntries(formData);
+            try {
+                const response = await fetch(`${API_URL}/student-courses`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(assignData)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('Student assigned to course successfully', 'success', 'assignStudentCourseResponse', result, 'assignStudentCourseJsonResponse');
+                    e.target.reset();
+                } else {
+                    showNotification(result.error || 'Failed to assign student to course', 'error', 'assignStudentCourseResponse', result, 'assignStudentCourseJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Error assigning student to course', 'error', 'assignStudentCourseResponse', { error: error.message }, 'assignStudentCourseJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Fetch and display all student courses
+        document.getElementById('getAllStudentCoursesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            try {
+                const response = await fetch(`${API_URL}/student-courses`);
+                const allStudentCourses = await response.json();
+                const tableBody = document.getElementById('allStudentCoursesTable');
+                tableBody.innerHTML = '';
+                if (Array.isArray(allStudentCourses)) {
+                    allStudentCourses.forEach(course => {
+                        console.log(allStudentCourses)
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="border p-2">${course.student_course_id}</td>
+                            <td class="border p-2">${course.student_id}</td>
+                            <td class="border p-2">${course.course_id}</td>
+                            <td class="border p-2">${course.session_id}</td>
+                            <td class="border p-2">${course.semester_id}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    showNotification('All student courses fetched successfully', 'success', 'allStudentCoursesResponse', allStudentCourses, 'allStudentCoursesJsonResponse');
+                } else {
+                    showNotification('Unexpected response format', 'error', 'allStudentCoursesResponse', allStudentCourses, 'allStudentCoursesJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Failed to fetch all student courses', 'error', 'allStudentCoursesResponse', { error: error.message }, 'allStudentCoursesJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Fetch and display student's courses
+        document.getElementById('getStudentCoursesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const { studentId } = Object.fromEntries(formData);
+            try {
+                const response = await fetch(`${API_URL}/student-courses/${studentId}`);
+                const studentCourses = await response.json();
+                const tableBody = document.getElementById('studentCoursesTable');
+                tableBody.innerHTML = '';
+                if (Array.isArray(studentCourses)) {
+                    studentCourses.forEach(course => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="border p-2">${course.student_course_id}</td>
+                            <td class="border p-2">${course.student_id}</td>
+                            <td class="border p-2">${course.course_id}</td>
+                            <td class="border p-2">${course.session_id}</td>
+                            <td class="border p-2">${course.semester_id}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    showNotification('Student courses fetched successfully', 'success', 'studentCoursesResponse', studentCourses, 'studentCoursesJsonResponse');
+                } else {
+                    showNotification(studentCourses.error || 'No courses found or unexpected response', 'error', 'studentCoursesResponse', studentCourses, 'studentCoursesJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Failed to fetch student courses', 'error', 'studentCoursesResponse', { error: error.message }, 'studentCoursesJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Initial fetch of all student courses on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            toggleLoading(true);
+            try {
+                const response = await fetch(`${API_URL}/student-courses`);
+                const allStudentCourses = await response.json();
+                console.log(allStudentCourses)
+                const tableBody = document.getElementById('allStudentCoursesTable');
+                tableBody.innerHTML = '';
+                if (Array.isArray(allStudentCourses)) {
+                    allStudentCourses.forEach(course => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="border p-2">${course.student_course_id}</td>
+                            <td class="border p-2">${course.student_Id}</td>
+                            <td class="border p-2">${course.course_Id}</td>
+                            <td class="border p-2">${course.session_Id}</td>
+                            <td class="border p-2">${course.semester_Id}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    showNotification('All student courses fetched successfully', 'success', 'allStudentCoursesResponse', allStudentCourses, 'allStudentCoursesJsonResponse');
+                } else {
+                    showNotification('Unexpected response format', 'error', 'allStudentCoursesResponse', allStudentCourses, 'allStudentCoursesJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Failed to fetch all student courses', 'error', 'allStudentCoursesResponse', { error: error.message }, 'allStudentCoursesJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>

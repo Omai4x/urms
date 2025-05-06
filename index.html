@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to right, #4b6cb7, #182848);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+        }
+        .form-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 420px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .form-toggle {
+            display: none;
+        }
+        .form-toggle.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        .error {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .input-error {
+            border-color: #dc2626;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        button:focus, input:focus {
+            outline: none;
+            ring: 2px solid #3b82f6;
+        }
+
+        /* Loading Spinner Styles */
+        .loading-spinner {
+            display: inline-block;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem; /* Space between text and spinner */
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container" role="region" aria-live="polite">
+        <form id="loginForm" class="form-toggle active" aria-labelledby="loginTitle">
+            <h2 id="loginTitle" class="text-2xl font-bold text-gray-800 mb-6 text-center">Login</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="loginId" class="block text-sm font-medium text-gray-700">Login ID (Matric Number or Staff ID)</label>
+                    <input
+                        type="text"
+                        id="loginId"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your Matric Number or Staff ID"
+                        required
+                        aria-describedby="loginIdError"
+                    />
+                    <p id="loginIdError" class="error">Please enter a valid Login ID</p>
+                </div>
+                <div>
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-700">Password</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="loginPassword"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter your password"
+                            required
+                            aria-describedby="loginPasswordError"
+                        />
+                        <button
+                            type="button"
+                            id="toggleLoginPassword"
+                            class="absolute right-3 top-3 text-gray-500 text-sm"
+                            aria-label="Toggle password visibility"
+                        >
+                            Show
+                        </button>
+                    </div>
+                    <p id="loginPasswordError" class="error">Password must be at least 6 characters</p>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <a href="#" class="text-blue-600 hover:underline" id="forgotPassword">Forgot Password?</a>
+                </div>
+                <button
+                    type="submit"
+                    id="loginButton"
+                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+                >
+                    <span class="login-button-content">
+                        Login
+                        <span id="loginSpinner" class="loading-spinner hidden"></span>
+                    </span>
+                </button>
+            </div>
+            <p class="mt-6 text-center text-sm text-gray-600">
+                Don't have an account?
+                <a href="#" id="showRegister" class="text-blue-600 hover:underline" aria-label="Switch to registration form">Register</a>
+            </p>
+        </form>
+
+        <form id="registerForm" class="form-toggle" aria-labelledby="registerTitle">
+            <h2 id="registerTitle" class="text-2xl font-bold text-gray-800 mb-6 text-center">Register</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="registerFirstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                    <input
+                        type="text"
+                        id="registerFirstName"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your first name"
+                        required
+                        aria-describedby="registerFirstNameError"
+                    />
+                    <p id="registerFirstNameError" class="error">First name is required</p>
+                </div>
+                <div>
+                    <label for="registerLastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input
+                        type="text"
+                        id="registerLastName"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your last name"
+                        required
+                        aria-describedby="registerLastNameError"
+                    />
+                    <p id="registerLastNameError" class="error">Last name is required</p>
+                </div>
+                <div>
+                    <label for="registerEmail" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                        type="email"
+                        id="registerEmail"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your email"
+                        required
+                        aria-describedby="registerEmailError"
+                    />
+                    <p id="registerEmailError" class="error">Please enter a valid email</p>
+                </div>
+                <div>
+                    <label for="registerRole" class="block text-sm font-medium text-gray-700">Role</label>
+                    <select
+                        id="registerRole"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                        aria-describedby="registerRoleError"
+                    >
+                        <option value="" disabled selected>Select your role</option>
+                        <option value="student">Student</option>
+                        <option value="lecturer">Lecturer</option>
+                    </select>
+                    <p id="registerRoleError" class="error">Please select a role</p>
+                </div>
+                <div>
+                    <label for="registerDepartment" class="block text-sm font-medium text-gray-700">Department</label>
+                    <select
+                        id="registerDepartment"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                        aria-describedby="registerDepartmentError"
+                    >
+                        <option value="" disabled selected>Loading departments...</option>
+                    </select>
+                    <p id="registerDepartmentError" class="error">Please select a department</p>
+                </div>
+                <div>
+                    <label for="registerPhone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input
+                        type="tel"
+                        id="registerPhone"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your phone number"
+                        required
+                        aria-describedby="registerPhoneError"
+                    />
+                    <p id="registerPhoneError" class="error">Please enter a valid phone number</p>
+                </div>
+                <div>
+                    <label for="registerAddress" class="block text-sm font-medium text-gray-700">Address</label>
+                    <textarea
+                        id="registerAddress"
+                        class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your address"
+                        required
+                        aria-describedby="registerAddressError"
+                    ></textarea>
+                    <p id="registerAddressError" class="error">Address is required</p>
+                </div>
+                <div id="studentFields" class="space-y-5 hidden">
+                    <div>
+                        <label for="registerDOB" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                        <input
+                            type="date"
+                            id="registerDOB"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required
+                            aria-describedby="registerDOBError"
+                        />
+                        <p id="registerDOBError" class="error">Please enter a valid date of birth</p>
+                    </div>
+                    <div>
+                        <label for="registerLevel" class="block text-sm font-medium text-gray-700">Level</label>
+                        <select
+                            id="registerLevel"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required
+                            aria-describedby="registerLevelError"
+                        >
+                            <option value="" disabled selected>Select your level</option>
+                            <option value="lev001">100 Level</option>
+                            <option value="lev002">200 Level</option>
+                            <option value="lev003">300 Level</option>
+                            <option value="lev004">400 Level</option>
+                            <option value="500">500 Level</option>
+                        </select>
+                        <p id="registerLevelError" class="error">Please select a level</p>
+                    </div>
+                    <div>
+                        <label for="registerGender" class="block text-sm font-medium text-gray-700">Gender</label>
+                        <select
+                            id="registerGender"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required
+                            aria-describedby="registerGenderError"
+                        >
+                            <option value="" disabled selected>Select your gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <p id="registerGenderError" class="error">Please select a gender</p>
+                    </div>
+                    <div>
+                        <label for="registerState" class="block text-sm font-medium text-gray-700">State of Origin</label>
+                        <input
+                            type="text"
+                            id="registerState"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter your state of origin"
+                            required
+                            aria-describedby="registerStateError"
+                        />
+                        <p id="registerStateError" class="error">State of origin is required</p>
+                    </div>
+                    <div>
+                        <label for="registerLGA" class="block text-sm font-medium text-gray-700">Local Government Area</label>
+                        <input
+                            type="text"
+                            id="registerLGA"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter your local government area"
+                            required
+                            aria-describedby="registerLGAError"
+                        />
+                        <p id="registerLGAError" class="error">Local government area is required</p>
+                    </div>
+                </div>
+                <div>
+                    <label for="registerPassword" class="block text-sm font-medium text-gray-700">Password</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="registerPassword"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter your password"
+                            required
+                            aria-describedby="registerPasswordError"
+                        />
+                        <button
+                            type="button"
+                            id="toggleRegisterPassword"
+                            class="absolute right-3 top-3 text-gray-500 text-sm"
+                            aria-label="Toggle password visibility"
+                        >
+                            Show
+                        </button>
+                    </div>
+                    <p id="registerPasswordError" class="error">Password must be at least 6 characters</p>
+                </div>
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Confirm your password"
+                            required
+                            aria-describedby="confirmPasswordError"
+                        />
+                        <button
+                            type="button"
+                            id="toggleConfirmPassword"
+                            class="absolute right-3 top-3 text-gray-500 text-sm"
+                            aria-label="Toggle confirm password visibility"
+                        >
+                            Show
+                        </button>
+                    </div>
+                    <p id="confirmPasswordError" class="error">Passwords do not match</p>
+                </div>
+                <button
+                    type="submit"
+                    id="registerButton"
+                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+                >
+                    <span class="register-button-content">
+                        Register
+                        <span id="registerSpinner" class="loading-spinner hidden"></span>
+                    </span>
+                </button>
+            </div>
+            <p class="mt-6 text-center text-sm text-gray-600">
+                Already a Student?
+                <a href="#" id="showLogin" class="text-blue-600 hover:underline" aria-label="Switch to login form">Login</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        // Form Toggle
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const forgotPassword = document.getElementById('forgotPassword');
+
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.remove('active');
+            registerForm.classList.add('active');
+        });
+
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.classList.remove('active');
+            loginForm.classList.add('active');
+        });
+
+        forgotPassword.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Forgot Password functionality is not implemented yet.');
+        });
+
+        // Password Toggle
+        function setupPasswordToggle(inputId, toggleId) {
+            const input = document.getElementById(inputId);
+            const toggle = document.getElementById(toggleId);
+            toggle.addEventListener('click', () => {
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                toggle.textContent = isPassword ? 'Hide' : 'Show';
+                toggle.setAttribute('aria-label', `Toggle ${inputId} visibility`);
+            });
+        }
+
+        setupPasswordToggle('loginPassword', 'toggleLoginPassword');
+        setupPasswordToggle('registerPassword', 'toggleRegisterPassword');
+        setupPasswordToggle('confirmPassword', 'toggleConfirmPassword');
+
+        // Real-time Validation
+        function validateInput(input, errorElement, validationFn, errorMessage) {
+            input.addEventListener('input', () => {
+                const isValid = validationFn(input.value);
+                errorElement.style.display = isValid ? 'none' : 'block';
+                input.classList.toggle('input-error', !isValid);
+            });
+        }
+
+        // Email validation for registration only
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        // Phone number validation
+        function validatePhone(phone) {
+            return /^\+?\d{10,15}$/.test(phone.replace(/\s/g, ''));
+        }
+
+        // Date of birth validation
+        function validateDOB(date) {
+            const selectedDate = new Date(date);
+            const today = new Date();
+            return date && selectedDate < today;
+        }
+
+        // Login Form Validation
+        const loginId = document.getElementById('loginId');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginIdError = document.getElementById('loginIdError');
+        const loginPasswordError = document.getElementById('loginPasswordError');
+        const loginButton = document.getElementById('loginButton');
+        const loginSpinner = document.getElementById('loginSpinner');
+
+        validateInput(loginId, loginIdError, (value) => value.trim().length > 0, 'Please enter a valid Login ID');
+        validateInput(loginPassword, loginPasswordError, (value) => value.length >= 6, 'Password must be at least 6 characters');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let isValid = true;
+
+            if (!loginId.value.trim()) {
+                loginIdError.style.display = 'block';
+                loginId.classList.add('input-error');
+                isValid = false;
+            } else {
+                loginIdError.style.display = 'none';
+                loginId.classList.remove('input-error');
+            }
+
+            if (loginPassword.value.length < 6) {
+                loginPasswordError.style.display = 'block';
+                loginPassword.classList.add('input-error');
+                isValid = false;
+            } else {
+                loginPasswordError.style.display = 'none';
+                loginPassword.classList.remove('input-error');
+            }
+
+            if (isValid) {
+                loginSpinner.classList.remove('hidden');
+                loginButton.disabled = true;
+                loginButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    const response = await fetch('http://localhost:3000/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            loginId: loginId.value,
+                            password: loginPassword.value
+                        })
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        showNotification('Login successful!', 'success');
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        showNotification(result.error || 'Login failed', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Error during login', 'error');
+                    console.error('Login error:', error);
+                } finally {
+                    loginSpinner.classList.add('hidden');
+                    loginButton.disabled = false;
+                    loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    loginForm.reset();
+                }
+            }
+        });
+
+        // Registration Form Validation
+        const registerFirstName = document.getElementById('registerFirstName');
+        const registerLastName = document.getElementById('registerLastName');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerRole = document.getElementById('registerRole');
+        const registerDepartment = document.getElementById('registerDepartment');
+        const registerPhone = document.getElementById('registerPhone');
+        const registerAddress = document.getElementById('registerAddress');
+        const registerDOB = document.getElementById('registerDOB');
+        const registerLevel = document.getElementById('registerLevel');
+        const registerGender = document.getElementById('registerGender');
+        const registerState = document.getElementById('registerState');
+        const registerLGA = document.getElementById('registerLGA');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerButton = document.getElementById('registerButton');
+        const registerSpinner = document.getElementById('registerSpinner');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const registerFirstNameError = document.getElementById('registerFirstNameError');
+        const registerLastNameError = document.getElementById('registerLastNameError');
+        const registerEmailError = document.getElementById('registerEmailError');
+        const registerRoleError = document.getElementById('registerRoleError');
+        const registerDepartmentError = document.getElementById('registerDepartmentError');
+        const registerPhoneError = document.getElementById('registerPhoneError');
+        const registerAddressError = document.getElementById('registerAddressError');
+        const registerDOBError = document.getElementById('registerDOBError');
+        const registerLevelError = document.getElementById('registerLevelError');
+        const registerGenderError = document.getElementById('registerGenderError');
+        const registerStateError = document.getElementById('registerStateError');
+        const registerLGAError = document.getElementById('registerLGAError');
+        const registerPasswordError = document.getElementById('registerPasswordError');
+        const confirmPasswordError = document.getElementById('confirmPasswordError');
+        const studentFields = document.getElementById('studentFields');
+
+        // Fetch departments with retry
+        async function loadDepartments(retries = 1) {
+            const maxRetries = retries;
+            let attempt = 0;
+
+            while (attempt <= maxRetries) {
+                try {
+                    registerDepartment.innerHTML = '<option value="" disabled selected>Loading departments...</option>';
+                    const response = await fetch('http://localhost:3000/departments', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    const departments = await response.json();
+                    if (!Array.isArray(departments) || departments.length === 0) {
+                        registerDepartment.innerHTML = '<option value="" disabled selected>No departments available</option>';
+                        showNotification('No departments found. Please contact support.', 'error');
+                        return;
+                    }
+                    registerDepartment.innerHTML = '<option value="" disabled selected>Select your department</option>';
+                    departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.department_id;
+                        option.textContent = dept.department_name;
+                        registerDepartment.appendChild(option);
+                    });
+                    console.log(`Successfully loaded ${departments.length} departments`);
+                    return;
+                } catch (error) {
+                    attempt++;
+                    console.error(`Attempt ${attempt} failed to load departments:`, error);
+                    if (attempt > maxRetries) {
+                        registerDepartment.innerHTML = '<option value="" disabled selected>Error loading departments</option>';
+                        showNotification('Failed to load departments. Please try again later.', 'error');
+                        return;
+                    }
+                    // Wait 1 second before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+        }
+
+        loadDepartments();
+
+        // Toggle student-specific fields
+        registerRole.addEventListener('change', () => {
+            const isStudent = registerRole.value === 'student';
+            studentFields.classList.toggle('hidden', !isStudent);
+            if (!isStudent) {
+                [registerDOB, registerLevel, registerGender, registerState, registerLGA].forEach(input => {
+                    input.value = '';
+                    input.classList.remove('input-error');
+                    document.getElementById(`${input.id}Error`).style.display = 'none';
+                });
+            }
+        });
+
+        // Validation for new fields
+        validateInput(registerFirstName, registerFirstNameError, (value) => value.trim().length > 0, 'First name is required');
+        validateInput(registerLastName, registerLastNameError, (value) => value.trim().length > 0, 'Last name is required');
+        validateInput(registerEmail, registerEmailError, validateEmail, 'Please enter a valid email');
+        validateInput(registerRole, registerRoleError, (value) => value === 'student' || value === 'lecturer', 'Please select a role');
+        validateInput(registerDepartment, registerDepartmentError, (value) => value.trim().length > 0, 'Please select a department');
+        validateInput(registerPhone, registerPhoneError, validatePhone, 'Please enter a valid phone number');
+        validateInput(registerAddress, registerAddressError, (value) => value.trim().length > 0, 'Address is required');
+        validateInput(registerDOB, registerDOBError, validateDOB, 'Please enter a valid date of birth');
+        validateInput(registerLevel, registerLevelError, (value) => value.trim().length > 0, 'Please select a level');
+        validateInput(registerGender, registerGenderError, (value) => value === 'Male' || value === 'Female' || value === 'Other', 'Please select a gender');
+        validateInput(registerState, registerStateError, (value) => value.trim().length > 0, 'State of origin is required');
+        validateInput(registerLGA, registerLGAError, (value) => value.trim().length > 0, 'Local government area is required');
+        validateInput(registerPassword, registerPasswordError, (value) => value.length >= 6, 'Password must be at least 6 characters');
+        validateInput(confirmPassword, confirmPasswordError, (value) => value === registerPassword.value, 'Passwords do not match');
+
+        registerPassword.addEventListener('input', () => {
+            const isMatch = confirmPassword.value === registerPassword.value;
+            confirmPasswordError.style.display = isMatch || !confirmPassword.value ? 'none' : 'block';
+            confirmPassword.classList.toggle('input-error', !isMatch && confirmPassword.value);
+        });
+
+        confirmPassword.addEventListener('input', () => {
+            const isMatch = confirmPassword.value === registerPassword.value;
+            confirmPasswordError.style.display = isMatch || !confirmPassword.value ? 'none' : 'block';
+            confirmPassword.classList.toggle('input-error', !isMatch && confirmPassword.value);
+        });
+
+        // Register Form Submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let isValid = true;
+
+            // Validate common fields
+            if (!registerFirstName.value.trim()) {
+                registerFirstNameError.style.display = 'block';
+                registerFirstName.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerFirstNameError.style.display = 'none';
+                registerFirstName.classList.remove('input-error');
+            }
+
+            if (!registerLastName.value.trim()) {
+                registerLastNameError.style.display = 'block';
+                registerLastName.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerLastNameError.style.display = 'none';
+                registerLastName.classList.remove('input-error');
+            }
+
+            if (!validateEmail(registerEmail.value)) {
+                registerEmailError.style.display = 'block';
+                registerEmail.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerEmailError.style.display = 'none';
+                registerEmail.classList.remove('input-error');
+            }
+
+            if (!registerRole.value) {
+                registerRoleError.style.display = 'block';
+                registerRole.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerRoleError.style.display = 'none';
+                registerRole.classList.remove('input-error');
+            }
+
+            if (!registerDepartment.value) {
+                registerDepartmentError.style.display = 'block';
+                registerDepartment.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerDepartmentError.style.display = 'none';
+                registerDepartment.classList.remove('input-error');
+            }
+
+            if (!validatePhone(registerPhone.value)) {
+                registerPhoneError.style.display = 'block';
+                registerPhone.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerPhoneError.style.display = 'none';
+                registerPhone.classList.remove('input-error');
+            }
+
+            if (!registerAddress.value.trim()) {
+                registerAddressError.style.display = 'block';
+                registerAddress.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerAddressError.style.display = 'none';
+                registerAddress.classList.remove('input-error');
+            }
+
+            if (registerPassword.value.length < 6) {
+                registerPasswordError.style.display = 'block';
+                registerPassword.classList.add('input-error');
+                isValid = false;
+            } else {
+                registerPasswordError.style.display = 'none';
+                registerPassword.classList.remove('input-error');
+            }
+
+            if (registerPassword.value !== confirmPassword.value) {
+                confirmPasswordError.style.display = 'block';
+                confirmPassword.classList.add('input-error');
+                isValid = false;
+            } else {
+                confirmPasswordError.style.display = 'none';
+                confirmPassword.classList.remove('input-error');
+            }
+
+            // Validate student-specific fields if role is student
+            if (registerRole.value === 'student') {
+                if (!validateDOB(registerDOB.value)) {
+                    registerDOBError.style.display = 'block';
+                    registerDOB.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    registerDOBError.style.display = 'none';
+                    registerDOB.classList.remove('input-error');
+                }
+
+                if (!registerLevel.value) {
+                    registerLevelError.style.display = 'block';
+                    registerLevel.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    registerLevelError.style.display = 'none';
+                    registerLevel.classList.remove('input-error');
+                }
+
+                if (!registerGender.value) {
+                    registerGenderError.style.display = 'block';
+                    registerGender.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    registerGenderError.style.display = 'none';
+                    registerGender.classList.remove('input-error');
+                }
+
+                if (!registerState.value.trim()) {
+                    registerStateError.style.display = 'block';
+                    registerState.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    registerStateError.style.display = 'none';
+                    registerState.classList.remove('input-error');
+                }
+
+                if (!registerLGA.value.trim()) {
+                    registerLGAError.style.display = 'block';
+                    registerLGA.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    registerLGAError.style.display = 'none';
+                    registerLGA.classList.remove('input-error');
+                }
+            }
+
+            if (isValid) {
+                registerSpinner.classList.remove('hidden');
+                registerButton.disabled = true;
+                registerButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+                const registrationData = {
+                    role: registerRole.value,
+                    first_name: registerFirstName.value.trim(),
+                    last_name: registerLastName.value.trim(),
+                    email: registerEmail.value,
+                    department_id: registerDepartment.value,
+                    phone_number: registerPhone.value.trim(),
+                    address: registerAddress.value.trim(),
+                    intended_password: registerPassword.value
+                };
+
+                if (registerRole.value === 'student') {
+                    registrationData.date_of_birth = registerDOB.value;
+                    registrationData.level_id = registerLevel.value;
+                    registrationData.gender = registerGender.value;
+                    registrationData.state_of_origin = registerState.value.trim();
+                    registrationData.local_government_area = registerLGA.value.trim();
+                }
+
+                try {
+                    const response = await fetch('http://localhost:3000/registration', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(registrationData)
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        showNotification(`${result.message}`, 'success');
+                        registerForm.reset();
+                        studentFields.classList.add('hidden');
+                        loginForm.classList.add('active');
+                        registerForm.classList.remove('active');
+                    } else {
+                        showNotification(result.error || 'Registration failed', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Error during registration', 'error');
+                    console.error('Registration error:', error);
+                } finally {
+                    registerSpinner.classList.add('hidden');
+                    registerButton.disabled = false;
+                    registerButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        });
+
+        // Notification function
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white z-50`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

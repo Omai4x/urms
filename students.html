@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students - URMS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-gray-800 text-white p-4 overflow-y-auto md:transform-none">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">URMS Admin Dashboard</h2>
+            <button id="closeSidebar" class="md:hidden text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <nav>
+            <ul class="space-y-2">
+                <li><a href="index.html" class="block p-2 hover:bg-gray-700 rounded">Home</a></li>
+                <li><a href="lecturers.html" class="block p-2 hover:bg-gray-700 rounded">Lecturers</a></li>
+                <li><a href="students.html" class="block p-2 bg-gray-700 rounded">Students</a></li>
+                <li><a href="pending-students.html" class="block p-2 hover:bg-gray-700 rounded">Pending Students</a></li>
+                <li><a href="departments.html" class="block p-2 hover:bg-gray-700 rounded">Departments</a></li>
+                <li><a href="courses.html" class="block p-2 hover:bg-gray-700 rounded">Courses</a></li>
+                <li><a href="student-courses.html" class="block p-2 hover:bg-gray-700 rounded">Student Courses</a></li>
+                <li><a href="login.html" class="block p-2 hover:bg-gray-700 rounded">Logout</a></li><li><a href="results.html" class="block p-2 hover:bg-gray-700 rounded">Results</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 p-6 min-h-screen">
+        <!-- Hamburger Menu for Mobile -->
+        <button id="openSidebar" class="md:hidden mb-4 p-2 bg-gray-800 text-white rounded focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="spinner mx-auto"></div>
+
+        <!-- Students Section -->
+        <section id="students" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Manage Students</h2>
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold mb-2">Student Info by Matric Number</h3>
+                <form id="studentInfoForm" class="flex gap-2 mb-4">
+                    <input type="text" name="matricNumber" placeholder="Enter Matric Number" class="p-2 border rounded flex-1" required>
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Get Info</button>
+                </form>
+                <div id="studentInfoResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="studentInfoJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <h3 class="text-lg font-semibold mb-2">Update Student</h3>
+                <form id="updateStudentForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" name="studentId" placeholder="Student ID" class="p-2 border rounded" required>
+                    <input type="text" name="matriculation_number" placeholder="Matriculation Number" class="p-2 border rounded">
+                    <input type="text" name="first_name" placeholder="First Name" class="p-2 border rounded">
+                    <input type="text" name="last_name" placeholder="Last Name" class="p-2 border rounded">
+                    <input type="email" name="email" placeholder="Email" class="p-2 border rounded">
+                    <input type="text" name="phone_number" placeholder="Phone Number" class="p-2 border rounded">
+                    <input type="text" name="address" placeholder="Address" class="p-2 border rounded">
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 w-full">Update Student</button>
+                    </div>
+                </form>
+                <div id="updateStudentResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="updateStudentJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <h3 class="text-lg font-semibold mb-2">Delete Student</h3>
+                <form id="deleteStudentForm" class="flex gap-2 mb-4">
+                    <input type="text" name="studentId" placeholder="Student ID" class="p-2 border rounded flex-1" required>
+                    <button type="submit" class="bg-red-500 text-white p-2 rounded hover:bg-red-600">Delete</button>
+                </form>
+                <div id="deleteStudentResponse" class="hidden p-4 mb-4 rounded text-white"></div>
+                <pre id="deleteStudentJsonResponse" class="hidden p-4 mb-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+
+                <h3 class="text-lg font-semibold mb-2">All Students</h3>
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border p-2">Matric Number</th>
+                            <th class="border p-2">Name</th>
+                            <th class="border p-2">Email</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTable"></tbody>
+                </table>
+                <pre id="studentsJsonResponse" class="hidden p-4 mt-4 bg-gray-800 text-white rounded border max-h-96 overflow-auto font-mono"></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Sidebar toggle
+        const openSidebarBtn = document.getElementById('openSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const loading = document.getElementById('loading');
+
+        openSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+        });
+
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+
+        // Notification and JSON response function
+        function showNotification(message, type = 'success', elementId = 'notification', jsonResponse = null, jsonElementId = null) {
+            // Show notification
+            const notification = document.getElementById(elementId);
+            notification.textContent = message;
+            notification.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+            notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+
+            // Show JSON response
+            if (jsonResponse !== null && jsonElementId) {
+                const jsonBox = document.getElementById(jsonElementId);
+                jsonBox.textContent = ''; // Clear previous content
+                jsonBox.textContent = JSON.stringify(jsonResponse, null, 2);
+                jsonBox.classList.remove('hidden', 'border-green-500', 'border-red-500');
+                jsonBox.classList.add(type === 'success' ? 'border-green-500' : 'border-red-500');
+            }
+        }
+
+        // Show/hide loading indicator
+        function toggleLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // Fetch and display students
+        async function fetchStudents() {
+            toggleLoading(true);
+            try {
+                const response = await fetch(`${API_URL}/students`);
+                const students = await response.json();
+                const tableBody = document.getElementById('studentsTable');
+                tableBody.innerHTML = '';
+                students.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="border p-2">${student.matriculation_number}</td>
+                        <td class="border p-2">${student.first_name} ${student.last_name}</td>
+                        <td class="border p-2">${student.email}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                showNotification('Students fetched successfully', 'success', 'studentInfoResponse', students, 'studentsJsonResponse');
+            } catch (error) {
+                showNotification('Failed to fetch students', 'error', 'studentInfoResponse', { error: error.message }, 'studentsJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Update student
+        document.getElementById('updateStudentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const updateData = Object.fromEntries(formData);
+            const studentId = updateData.studentId;
+            delete updateData.studentId; // Remove studentId from update data
+            // Remove empty fields
+            Object.keys(updateData).forEach(key => {
+                if (!updateData[key]) delete updateData[key];
+            });
+            try {
+                const response = await fetch(`${API_URL}/students/${studentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('Student updated successfully', 'success', 'updateStudentResponse', result, 'updateStudentJsonResponse');
+                    e.target.reset();
+                    fetchStudents();
+                } else {
+                    showNotification(result.error || 'Failed to update student', 'error', 'updateStudentResponse', result, 'updateStudentJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Error updating student', 'error', 'updateStudentResponse', { error: error.message }, 'updateStudentJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Delete student
+        document.getElementById('deleteStudentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const { studentId } = Object.fromEntries(formData);
+            try {
+                const response = await fetch(`${API_URL}/students/${studentId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('Student deleted successfully', 'success', 'deleteStudentResponse', result, 'deleteStudentJsonResponse');
+                    e.target.reset();
+                    fetchStudents();
+                } else {
+                    showNotification(result.error || 'Failed to delete student', 'error', 'deleteStudentResponse', result, 'deleteStudentJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Error deleting student', 'error', 'deleteStudentResponse', { error: error.message }, 'deleteStudentJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Get student info
+        document.getElementById('studentInfoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            const formData = new FormData(e.target);
+            const { matricNumber } = Object.fromEntries(formData);
+            try {
+                const response = await fetch(`${API_URL}/students/info/${matricNumber}`);
+                const studentInfo = await response.json();
+                if (response.ok) {
+                    showNotification('Student info fetched successfully', 'success', 'studentInfoResponse', studentInfo, 'studentInfoJsonResponse');
+                } else {
+                    showNotification(studentInfo.error || 'Student not found', 'error', 'studentInfoResponse', studentInfo, 'studentInfoJsonResponse');
+                }
+            } catch (error) {
+                showNotification('Error fetching student info', 'error', 'studentInfoResponse', { error: error.message }, 'studentInfoJsonResponse');
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        // Initial fetch
+        fetchStudents();
+    </script>
+</body>
+</html>
