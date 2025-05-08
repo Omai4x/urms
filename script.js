@@ -1,6 +1,6 @@
 
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://urms-backend.onrender.com';
 
 // Utility function to display messages
 function displayMessage(elementId, message, isError = false) {
