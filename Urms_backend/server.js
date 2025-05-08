@@ -16,13 +16,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database Configuration
+// const pool = new Pool({
+//     user: 'postgres',
+//     host: 'localhost',
+//     database: 'urms_db',
+//     password: 'Omai4x',
+//     port: 5432,
+// });
+// Database Configuration
 const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'urms_db',
-    password: 'Omai4x',
-    port: 5432,
+    // Use the connectionString option to provide the full URL
+    // The URL is read from the DATABASE_URL environment variable
+    connectionString: process.env.DATABASE_URL,
+
+    // ⭐ Important for connecting to external/managed databases over the internet ⭐
+    // You will likely need SSL configured. Check Render/Railway docs for exact settings.
+    // A common setting for managed databases (like Railway's public endpoint) is:
+    ssl: {
+        rejectUnauthorized: false
+    }
+    // However, ideally, use more secure SSL options if your DB provider supports them.
+    // Render's docs often recommend specific SSL settings for their databases.
 });
+
+// Make sure to handle potential connection errors after creating the pool
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1); // Or handle the error more gracefully
+});
+
+console.log("Database Pool configured using DATABASE_URL, attempting connection..."); // Add logging
 
 // Database Connection Check
 pool.on('connect', () => {
