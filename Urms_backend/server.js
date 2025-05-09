@@ -7,6 +7,10 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Enable CORS for frontend origin
+app.use(cors({
+    origin: '*'
+}));
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
