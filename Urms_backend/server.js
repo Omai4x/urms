@@ -2385,7 +2385,7 @@ app.post('/login', async (req, res) => {
         } else if (user.role === 'lecturer' && user.lecturer_id) {
             redirectUrl = `/lecturer-home.html?user_id=${user.user_id}&lecturer_id=${user.lecturer_id}`;
         } else if (user.role === 'admin') {
-            redirectUrl = `/admin-home.html?user_id=${user.user_id}`;
+            redirectUrl = `/urms/admin-home.html?user_id=${user.user_id}`;
         } else {
             return res.status(403).json({ error: 'Invalid user role.' });
         }
