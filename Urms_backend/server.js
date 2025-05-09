@@ -2381,9 +2381,9 @@ app.post('/login', async (req, res) => {
 
         // Step 6: Prepare redirect URL based on role
         if (user.role === 'student' && user.student_id) {
-            redirectUrl = `/student-home.html?user_id=${user.user_id}&student_id=${user.student_id}`;
+            redirectUrl = `/urms/student-home.html?user_id=${user.user_id}&student_id=${user.student_id}`;
         } else if (user.role === 'lecturer' && user.lecturer_id) {
-            redirectUrl = `/lecturer-home.html?user_id=${user.user_id}&lecturer_id=${user.lecturer_id}`;
+            redirectUrl = `/urms/lecturer-home.html?user_id=${user.user_id}&lecturer_id=${user.lecturer_id}`;
         } else if (user.role === 'admin') {
             redirectUrl = `/urms/admin-home.html?user_id=${user.user_id}`;
         } else {
